@@ -87,7 +87,11 @@ let serverStartTime = null;
 // Socket.io Setup
 // ============================================
 
-const socket = io();
+const socket = io({
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelayMax: 5000,
+});
 
 socket.on('connect', () => {
     showToast('Connected to server', 'info');
@@ -95,6 +99,10 @@ socket.on('connect', () => {
 
 socket.on('disconnect', () => {
     showToast('Disconnected from server', 'warning');
+});
+
+socket.on('connect_error', (error) => {
+    console.warn('Socket connection error', error);
 });
 
 socket.on('console', (data) => {
@@ -110,12 +118,60 @@ socket.on('status', (payload) => {
 // Utility Functions
 // ============================================
 
+function debounce(fn, wait = 200) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(...args), wait);
+    };
+}
+
+let editorInstance = null;
+let editorLoaded = false;
+let monacoInitializing = false;
+
+async function lazyLoadMonaco() {
+    if (editorLoaded || monacoInitializing) {
+        return;
+    }
+    monacoInitializing = true;
+
+    return new Promise((resolve, reject) => {
+        if (window.require) {
+            window.require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
+            window.require(['vs/editor/editor.main'], () => {
+                editorInstance = monaco.editor.create(editorContent, {
+                    value: editorContent.textContent || '',
+                    language: 'yaml',
+                    minimap: { enabled: false },
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                });
+                editorLoaded = true;
+                monacoInitializing = false;
+                resolve(editorInstance);
+            }, reject);
+        } else {
+            reject(new Error('Monaco loader not available'));
+        }
+    });
+}
+
 async function requestJson(url, options = {}) {
     try {
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': getCookie('_csrf') || '',
+            ...options.headers,
+        };
+
         const response = await fetch(url, {
-            headers: { 'Content-Type': 'application/json' },
-            ...options
+            headers,
+            credentials: 'include',
+            ...options,
         });
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || response.statusText);
@@ -137,6 +193,12 @@ function formatBytes(bytes) {
 
 function formatDate(date) {
     return new Date(date).toLocaleDateString() + ' ' + new Date(date).toLocaleTimeString();
+}
+
+function getCookie(name) {
+    const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+    const match = cookies.find(cookie => cookie.startsWith(name + '='));
+    return match ? decodeURIComponent(match.split('=')[1]) : '';
 }
 
 function formatUptime(seconds) {
@@ -252,18 +314,30 @@ function filterConsoleByLevel(logs, level) {
 
 function displayConsole() {
     const filtered = filterConsoleByLevel(consoleLogs, filterMode);
-    consoleOutput.innerHTML = filtered.map(log => {
+    const fragment = document.createDocumentFragment();
+    const batchSize = 80;
+    const total = filtered.length;
+    const start = Math.max(0, total - batchSize);
+
+    consoleOutput.innerHTML = '';
+
+    for (let i = start; i < total; i += 1) {
+        const log = filtered[i];
         const color = {
-            'INFO': '#7ee787',
-            'WARN': '#ffd700',
-            'WARNING': '#ffd700',
-            'ERROR': '#ff6b6b',
-            'SUCCESS': '#22c55e'
+            INFO: '#7ee787',
+            WARN: '#ffd700',
+            WARNING: '#ffd700',
+            ERROR: '#ff6b6b',
+            SUCCESS: '#22c55e',
         }[log.level.toUpperCase()] || '#7ee787';
 
-        return `<span style="color: ${color}">[${log.timestamp}] ${log.level}: ${escapeHtml(log.text)}</span>`;
-    }).join('');
+        const line = document.createElement('div');
+        line.className = 'console-line';
+        line.innerHTML = `<span style="color: ${color}">[${log.timestamp}] ${log.level}: ${escapeHtml(log.text)}</span>`;
+        fragment.appendChild(line);
+    }
 
+    consoleOutput.appendChild(fragment);
     consoleOutput.scrollTop = consoleOutput.scrollHeight;
 }
 
@@ -429,13 +503,13 @@ async function openFile(path) {
     try {
         const data = await requestJson('/api/files/read', {
             method: 'POST',
-            body: JSON.stringify({ path })
+            body: JSON.stringify({ path }),
         });
         activeFilePath = path;
         editorTitle.textContent = path;
-        editorContent.value = data.content;
         openModal(editorModal);
-        editorContent.focus();
+        await lazyLoadMonaco();
+        editorInstance?.setValue(data.content);
     } catch (error) {
         showToast('Failed to open file', 'error');
     }
@@ -445,9 +519,10 @@ async function saveFile() {
     try {
         if (!activeFilePath) return;
         showLoading(true);
+        const content = editorInstance ? editorInstance.getValue() : editorContent.textContent;
         await requestJson('/api/files/write', {
             method: 'POST',
-            body: JSON.stringify({ path: activeFilePath, content: editorContent.value })
+            body: JSON.stringify({ path: activeFilePath, content }),
         });
         closeModal(editorModal);
         refreshFiles(currentPath);
@@ -666,13 +741,13 @@ fileInput.addEventListener('change', (e) => {
     fileInput.value = '';
 });
 
-fileSearch.addEventListener('input', (e) => {
+fileSearch.addEventListener('input', debounce((e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.file-item').forEach(item => {
         const name = item.querySelector('.file-name-text').textContent.toLowerCase();
         item.style.display = name.includes(term) ? '' : 'none';
     });
-});
+}, 250));
 
 // Drag and drop
 uploadZone.addEventListener('dragover', (e) => {

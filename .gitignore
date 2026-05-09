@@ -1,4 +1,8 @@
 node_modules/
+dist/
+.env
+.env.*
 tmp/
 plugins/*.jar
+*.log
 .DS_Store

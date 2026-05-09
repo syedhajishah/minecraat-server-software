@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  role           Role      @default(USER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  sessions       Session[]
+  activities     Activity[]
+  apiTokens      ApiToken[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model ServerInstance {
+  id            String      @id @default(uuid())
+  name          String
+  slug          String      @unique
+  port          Int
+  rconPort      Int?
+  javaArgs      String      @default("-Xms1G -Xmx2G")
+  directory     String
+  status        ServerStatus @default(STOPPED)
+  template      String?
+  owner         User        @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  plugins       Plugin[]
+  backups       Backup[]
+  logs          LogEntry[]
+  playerStates  PlayerState[]
+}
+
+model Plugin {
+  id          String         @id @default(uuid())
+  name        String
+  version     String?
+  enabled     Boolean        @default(true)
+  sourcePath  String
+  server      ServerInstance @relation(fields: [serverId], references: [id])
+  serverId    String
+  installedAt DateTime       @default(now())
+}
+
+model Backup {
+  id          String         @id @default(uuid())
+  label       String
+  server      ServerInstance @relation(fields: [serverId], references: [id])
+  serverId    String
+  filePath    String
+  size        Int
+  createdAt   DateTime       @default(now())
+}
+
+model LogEntry {
+  id          String         @id @default(uuid())
+  server      ServerInstance @relation(fields: [serverId], references: [id])
+  serverId    String
+  level       LogLevel
+  message     String
+  source      String
+  createdAt   DateTime       @default(now())
+}
+
+model Activity {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  action      String
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+}
+
+model ApiToken {
+  id          String    @id @default(uuid())
+  label       String
+  tokenHash   String
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+}
+
+model PlayerState {
+  id          String    @id @default(uuid())
+  server      ServerInstance @relation(fields: [serverId], references: [id])
+  serverId    String
+  uuid        String
+  username    String
+  online      Boolean
+  ping        Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+enum ServerStatus {
+  RUNNING
+  STOPPED
+  STARTING
+  STOPPING
+  CRASHED
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+  DEBUG
+}

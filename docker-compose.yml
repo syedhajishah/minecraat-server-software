@@ -1,0 +1,37 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    container_name: minecraft-panel-app
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - SSL_ENABLED=${SSL_ENABLED}
+      - SSL_CERT_PATH=${SSL_CERT_PATH}
+      - SSL_KEY_PATH=${SSL_KEY_PATH}
+    depends_on:
+      - db
+    volumes:
+      - ./public:/usr/src/app/public:ro
+      - ./logs:/usr/src/app/logs
+      - ./plugins:/usr/src/app/plugins
+      - ./backups:/usr/src/app/backups
+  db:
+    image: postgres:16-alpine
+    container_name: minecraft-panel-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mcpanel
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+volumes:
+  db_data: {}
+

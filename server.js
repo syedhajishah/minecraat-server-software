@@ -7,6 +7,13 @@ const session = require('express-session');
 const multer = require('multer');
 const { spawn } = require('child_process');
 const { Server } = require('socket.io');
+require('dotenv').config();
+const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const winston = require('winston');
+const AdmZip = require('adm-zip');
+const csrf = require('csurf');
 
 const app = express();
 const server = http.createServer(app);
