@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const express = require('express');
 const http = require('http');
 const session = require('express-session');
@@ -31,6 +32,17 @@ const authConfig = fs.existsSync(authConfigPath)
 
 let mcProcess = null;
 let running = false;
+let serverStartTime = null;
+let consoleLogs = [];
+const MAX_LOGS = 1000;
+
+function addConsoleLog(text, level = 'INFO') {
+    const timestamp = new Date().toLocaleTimeString();
+    consoleLogs.push({ text, level, timestamp });
+    if (consoleLogs.length > MAX_LOGS) {
+        consoleLogs.shift();
+    }
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -73,21 +85,27 @@ function startServer() {
         throw new Error('purpur.jar not found in workspace root. Place Purpur server jar here.');
     }
 
+    serverStartTime = Date.now();
     mcProcess = spawn('java', ['-jar', serverJar, 'nogui'], {
         cwd: rootDir,
         stdio: ['pipe', 'pipe', 'pipe']
     });
 
     mcProcess.stdout.on('data', (chunk) => {
-        io.emit('console', chunk.toString());
+        const text = chunk.toString();
+        addConsoleLog(text);
+        io.emit('console', { text, level: 'INFO' });
     });
 
     mcProcess.stderr.on('data', (chunk) => {
-        io.emit('console', chunk.toString());
+        const text = chunk.toString();
+        addConsoleLog(text, 'ERROR');
+        io.emit('console', { text, level: 'ERROR' });
     });
 
     mcProcess.on('close', (code) => {
         running = false;
+        serverStartTime = null;
         mcProcess = null;
         io.emit('status', { running: false, exitCode: code });
     });
@@ -140,7 +158,23 @@ app.get('/login', (req, res) => {
 app.use(express.static(path.join(rootDir, 'public')));
 
 app.get('/api/status', (req, res) => {
-    res.json({ running });
+    const memUsage = process.memoryUsage();
+    const uptime = serverStartTime ? Math.floor((Date.now() - serverStartTime) / 1000) : 0;
+    const osStats = {
+        totalMem: os.totalmem(),
+        freeMem: os.freemem(),
+        cpus: os.cpus().length,
+        uptime: os.uptime(),
+        loadavg: os.loadavg(),
+        platform: os.platform()
+    };
+    res.json({
+        running,
+        uptime,
+        memory: memUsage,
+        system: osStats,
+        startTime: serverStartTime
+    });
 });
 
 app.post('/api/server/start', (req, res) => {
@@ -173,11 +207,18 @@ app.post('/api/server/command', (req, res) => {
 app.get('/api/files', (req, res) => {
     try {
         const dir = safeResolve(req.query.path || '.');
-        const items = fs.readdirSync(dir, { withFileTypes: true }).map((entry) => ({
-            name: entry.name,
-            isDirectory: entry.isDirectory(),
-            isFile: entry.isFile()
-        }));
+        const items = fs.readdirSync(dir, { withFileTypes: true }).map((entry) => {
+            const fullPath = path.join(dir, entry.name);
+            const stat = fs.statSync(fullPath);
+            return {
+                name: entry.name,
+                isDirectory: entry.isDirectory(),
+                isFile: entry.isFile(),
+                size: stat.size,
+                modified: stat.mtime,
+                created: stat.birthtime
+            };
+        });
         res.json({ path: path.relative(rootDir, dir) || '.', items });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -253,6 +294,58 @@ app.post('/api/plugins/delete', (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+app.post('/api/files/mkdir', (req, res) => {
+    try {
+        const dir = safeResolve(req.body.path);
+        fs.mkdirSync(dir, { recursive: true });
+        res.json({ created: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/files/rename', (req, res) => {
+    try {
+        const oldPath = safeResolve(req.body.oldPath);
+        const newPath = safeResolve(req.body.newPath);
+        fs.renameSync(oldPath, newPath);
+        res.json({ renamed: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/files/download', (req, res) => {
+    try {
+        const file = safeResolve(req.query.path);
+        const stat = fs.statSync(file);
+        if (!stat.isFile()) {
+            return res.status(400).json({ error: 'Not a file' });
+        }
+        res.download(file);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/files/upload', upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        const targetDir = safeResolve(req.body.path || '.');
+        const targetPath = path.join(targetDir, req.file.originalname);
+        fs.renameSync(req.file.path, targetPath);
+        res.json({ uploaded: true, file: req.file.originalname });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/console', (req, res) => {
+    res.json({ logs: consoleLogs });
 });
 
 io.on('connection', (socket) => {

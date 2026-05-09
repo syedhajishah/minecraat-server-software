@@ -9,78 +9,298 @@
 </head>
 
 <body>
-    <div class="page-shell">
-        <header>
-            <div class="header-left">
-                <div>
-                    <h1>Local Minecraft Server Panel</h1>
-                    <p>Control your Purpur/Paper server on <strong>http://localhost:3000</strong></p>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <span></span>
+                </button>
+                <div class="brand">
+                    <div class="brand-icon">⚙️</div>
+                    <div>
+                        <h1>Server Panel</h1>
+                        <p class="brand-subtitle">Professional Manager</p>
+                    </div>
                 </div>
-                <button id="logoutBtn" class="secondary">Logout</button>
             </div>
-        </header>
 
-        <section class="card">
-            <div class="section-header">
-                <h2>Server Control</h2>
-                <div class="status-pill" id="statusText">Checking...</div>
-            </div>
-            <div class="field-row">
-                <button id="startBtn">Start Server</button>
-                <button id="stopBtn">Stop Server</button>
-            </div>
-        </section>
+            <nav class="nav-menu">
+                <div class="nav-group">NAVIGATION</div>
+                <a class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item" data-page="console">
+                    <span class="nav-icon">💻</span>
+                    <span>Console</span>
+                </a>
+                <a class="nav-item" data-page="files">
+                    <span class="nav-icon">📁</span>
+                    <span>Files</span>
+                </a>
+            </nav>
 
-        <section class="card">
-            <div class="section-header">
-                <h2>Real-time Console</h2>
+            <div class="sidebar-footer">
+                <div class="server-card">
+                    <div>
+                        <div class="server-name">Server Status</div>
+                        <div class="server-status" id="sidebarStatus" data-state="offline">
+                            <span class="status-dot"></span>
+                            <span>Offline</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>
-            <pre id="consoleOutput" class="console"></pre>
-            <form id="commandForm" class="command-form">
-                <input id="commandInput" placeholder="Enter console command" autocomplete="off" />
-                <button type="submit">Send</button>
-            </form>
-        </section>
+        </aside>
 
-        <section class="card">
-            <div class="section-header">
-                <h2>File Manager</h2>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h2 id="pageTitle">Dashboard</h2>
+                    <p id="pageSubtitle">Server overview and statistics</p>
+                </div>
+                <div class="topbar-right">
+                    <div class="server-actions">
+                        <button class="btn btn-success btn-lg" id="startBtn">
+                            <span>▶️</span> Start Server
+                        </button>
+                        <button class="btn btn-danger btn-lg" id="stopBtn">
+                            <span>⏹️</span> Stop Server
+                        </button>
+                        <button class="btn btn-info btn-lg" id="restartBtn">
+                            <span>🔄</span> Restart
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="file-manager-controls">
-                <button id="refreshFiles">Refresh</button>
-                <button id="navigateUp">Up</button>
-                <span class="current-path">Current: <strong id="currentPath">.</strong></span>
-            </div>
-            <div id="fileList" class="file-list"></div>
-        </section>
 
-        <section class="card">
-            <div class="section-header">
-                <h2>Plugin Installer</h2>
+            <!-- Dashboard Page -->
+            <div class="page-content" id="dashboard-page">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Server Status</h3>
+                            <div class="status-indicator" id="statusIndicator" data-state="offline"></div>
+                        </div>
+                        <div class="stat-value">
+                            <span id="serverStatusText">Offline</span>
+                            <span class="stat-label">Uptime: <span id="uptimeText">0s</span></span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Memory Usage</h3>
+                            <span class="stat-icon">💾</span>
+                        </div>
+                        <div class="stat-value">
+                            <span id="memoryText">0 MB</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memoryBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>CPU Usage</h3>
+                            <span class="stat-icon">⚡</span>
+                        </div>
+                        <div class="stat-value">
+                            <span id="cpuText">0%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpuBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Disk Usage</h3>
+                            <span class="stat-icon">💾</span>
+                        </div>
+                        <div class="stat-value">
+                            <span id="diskText">0 GB</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="diskBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Cards -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>System Information</h3>
+                        <div class="info-content">
+                            <div class="info-row">
+                                <span class="info-label">Server Version:</span>
+                                <span id="serverVersion">1.20.1 Purpur</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Players Online:</span>
+                                <span id="playerCount">0/20</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Last Backup:</span>
+                                <span id="lastBackup">Never</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Installed Plugins</h3>
+                        <div id="pluginList" class="plugin-list">
+                            <div class="empty-state">No plugins installed</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <form id="pluginUploadForm" class="plugin-form">
-                <input type="file" id="pluginFile" accept=".jar" />
-                <button type="submit">Upload Plugin</button>
-            </form>
-            <div class="file-actions">
-                <button id="refreshPlugins">Refresh Plugin List</button>
+
+            <!-- Console Page -->
+            <div class="page-content hidden" id="console-page">
+                <div class="console-section">
+                    <div class="console-header">
+                        <div class="console-tabs">
+                            <button class="tab-btn active" data-filter="all">All</button>
+                            <button class="tab-btn" data-filter="info">Info</button>
+                            <button class="tab-btn" data-filter="warn">Warnings</button>
+                            <button class="tab-btn" data-filter="error">Errors</button>
+                        </div>
+                        <div class="console-controls">
+                            <button class="btn btn-sm btn-secondary" id="clearConsoleBtn">Clear</button>
+                            <button class="btn btn-sm btn-secondary" id="copyConsoleBtn">Copy All</button>
+                        </div>
+                    </div>
+
+                    <div class="console-container">
+                        <pre id="consoleOutput" class="console-output"></pre>
+                        <div class="console-loading hidden" id="consoleLoading">
+                            <div class="spinner"></div>
+                            Waiting for logs...
+                        </div>
+                    </div>
+
+                    <form id="commandForm" class="command-input">
+                        <input id="commandInput" type="text" placeholder="Enter server command..." autocomplete="off" />
+                        <button type="submit" class="btn btn-sm btn-success">Send Command</button>
+                    </form>
+                </div>
             </div>
-            <div id="pluginList" class="file-list"></div>
-        </section>
+
+            <!-- File Manager Page -->
+            <div class="page-content hidden" id="files-page">
+                <div class="file-manager-section">
+                    <div class="file-header">
+                        <div class="breadcrumb" id="breadcrumb">
+                            <span class="breadcrumb-item active">Root</span>
+                        </div>
+                        <div class="file-controls">
+                            <div class="search-box">
+                                <input type="text" id="fileSearch" placeholder="Search files..." />
+                            </div>
+                            <button class="btn btn-sm btn-secondary" id="refreshFilesBtn">Refresh</button>
+                            <button class="btn btn-sm btn-primary" id="uploadFilesBtn">Upload</button>
+                            <button class="btn btn-sm btn-primary" id="createFolderBtn">New Folder</button>
+                        </div>
+                    </div>
+
+                    <div class="file-list-container">
+                        <div id="fileListTable" class="file-list-table">
+                            <div class="file-list-header">
+                                <div class="file-col-name">Name</div>
+                                <div class="file-col-size">Size</div>
+                                <div class="file-col-date">Modified</div>
+                                <div class="file-col-actions">Actions</div>
+                            </div>
+                            <div id="fileList" class="file-list-body">
+                                <div class="empty-state">Loading files...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Zone -->
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" multiple hidden />
+                        <div class="upload-content">
+                            <span class="upload-icon">📤</span>
+                            <p>Drag files here to upload or click to select</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <dialog id="editorDialog">
-        <form method="dialog" class="editor-dialog">
-            <h3 id="editorTitle"></h3>
-            <textarea id="editorContent"></textarea>
-            <menu>
-                <button id="saveFile" type="button">Save</button>
-                <button id="cancelEdit" type="button">Cancel</button>
-            </menu>
-        </form>
-    </dialog>
+    <!-- Modals -->
+    <!-- File Editor Modal -->
+    <div class="modal" id="editorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="editorTitle">Edit File</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-container">
+                    <textarea id="editorContent" class="editor" spellcheck="false"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                <button class="btn btn-success" id="saveFileBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div class="modal" id="createFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Folder</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="folderName" placeholder="Folder name..." class="form-input" />
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelFolderBtn">Cancel</button>
+                <button class="btn btn-success" id="createFolderConfirmBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div class="modal" id="renameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Rename File</h3>
+                <button class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="newFileName" placeholder="New name..." class="form-input" />
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelRenameBtn">Cancel</button>
+                <button class="btn btn-success" id="confirmRenameBtn">Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <script src="app.js"></script>
 </body>
 
