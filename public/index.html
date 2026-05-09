@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minecraft Server Panel</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="page-shell">
+        <header>
+            <h1>Local Minecraft Server Panel</h1>
+            <p>Control your Purpur/Paper server on <strong>http://localhost:3000</strong></p>
+        </header>
+
+        <section class="card">
+            <div class="section-header">
+                <h2>Server Control</h2>
+                <div class="status-pill" id="statusText">Checking...</div>
+            </div>
+            <div class="field-row">
+                <button id="startBtn">Start Server</button>
+                <button id="stopBtn">Stop Server</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="section-header">
+                <h2>Real-time Console</h2>
+            </div>
+            <pre id="consoleOutput" class="console"></pre>
+            <form id="commandForm" class="command-form">
+                <input id="commandInput" placeholder="Enter console command" autocomplete="off" />
+                <button type="submit">Send</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <div class="section-header">
+                <h2>File Manager</h2>
+            </div>
+            <div class="file-actions">
+                <button id="refreshFiles">Refresh</button>
+            </div>
+            <div id="fileList" class="file-list"></div>
+        </section>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
