@@ -1,8 +1,24 @@
 # Minecraft Server Panel
 
-A production-ready Minecraft hosting panel for managing multiple Purpur/Paper servers with modern deployment, database support, and a professional UI.
+A production-ready Minecraft hosting panel for managing multiple Purpur/Paper servers with modern deployment, database support, and a SaaS-quality React frontend.
 
-## What’s Included
+## Architecture
+
+### Backend (`/src`)
+- TypeScript + Express.js server
+- Prisma ORM with PostgreSQL
+- JWT + session authentication
+- Multi-server instance management
+- Socket.io real-time events
+- File manager with upload validation
+
+### Frontend (`/frontend`)
+- React 18 + Vite + TypeScript
+- Modern component architecture
+- Recharts for analytics and dashboards
+- Zustand state management
+- Tailwind CSS styling
+
 
 - **Multi-server architecture** with independent instances, ports, backups, and logs
 - **Prisma + PostgreSQL** for users, permissions, server configs, backups, and activity history
