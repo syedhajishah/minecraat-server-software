@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Minecraft Panel</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .login-card {
+            width: min(420px, calc(100vw - 32px));
+            background: #111827;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.5);
+        }
+
+        h1 {
+            margin: 0 0 1rem;
+            font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            color: #94a3b8;
+        }
+
+        label {
+            display: block;
+            margin: 0.75rem 0 0.5rem;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #334155;
+            background: #020617;
+            color: #e2e8f0;
+            margin-bottom: 0.75rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #e2e8f0;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #111827;
+        }
+
+        .help-text {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <h1>Panel Login</h1>
+        <p>Sign in to manage your local Minecraft server.</p>
+        <form id="loginForm">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required />
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+            <button type="submit">Sign In</button>
+        </form>
+        <p class="help-text">Default local login is admin/admin123 if you did not update auth.json.</p>
+    </div>
+
+    <script>
+        async function requestJson(url, options = {}) {
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || response.statusText);
+            }
+            return response.json();
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            try {
+                await requestJson('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                window.location.href = '/';
+            } catch (error) {
+                alert(error.message || 'Login failed');
+            }
+        });
+    </script>
+</body>
+
+</html>

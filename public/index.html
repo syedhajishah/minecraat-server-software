@@ -11,8 +11,13 @@
 <body>
     <div class="page-shell">
         <header>
-            <h1>Local Minecraft Server Panel</h1>
-            <p>Control your Purpur/Paper server on <strong>http://localhost:3000</strong></p>
+            <div class="header-left">
+                <div>
+                    <h1>Local Minecraft Server Panel</h1>
+                    <p>Control your Purpur/Paper server on <strong>http://localhost:3000</strong></p>
+                </div>
+                <button id="logoutBtn" class="secondary">Logout</button>
+            </div>
         </header>
 
         <section class="card">
@@ -41,12 +46,39 @@
             <div class="section-header">
                 <h2>File Manager</h2>
             </div>
-            <div class="file-actions">
+            <div class="file-manager-controls">
                 <button id="refreshFiles">Refresh</button>
+                <button id="navigateUp">Up</button>
+                <span class="current-path">Current: <strong id="currentPath">.</strong></span>
             </div>
             <div id="fileList" class="file-list"></div>
         </section>
+
+        <section class="card">
+            <div class="section-header">
+                <h2>Plugin Installer</h2>
+            </div>
+            <form id="pluginUploadForm" class="plugin-form">
+                <input type="file" id="pluginFile" accept=".jar" />
+                <button type="submit">Upload Plugin</button>
+            </form>
+            <div class="file-actions">
+                <button id="refreshPlugins">Refresh Plugin List</button>
+            </div>
+            <div id="pluginList" class="file-list"></div>
+        </section>
     </div>
+
+    <dialog id="editorDialog">
+        <form method="dialog" class="editor-dialog">
+            <h3 id="editorTitle"></h3>
+            <textarea id="editorContent"></textarea>
+            <menu>
+                <button id="saveFile" type="button">Save</button>
+                <button id="cancelEdit" type="button">Cancel</button>
+            </menu>
+        </form>
+    </dialog>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="app.js"></script>

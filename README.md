@@ -6,7 +6,9 @@ Local web panel for controlling a Purpur/Paper Minecraft server.
 
 - Start and stop the server from a browser
 - Real-time console output via Socket.io
-- Basic file manager listing server directory contents
+- Full local file manager with file editing
+- Plugin installer for uploading `.jar` plugins
+- Login system for local panel access
 - Send commands to the Minecraft server
 
 ## Setup
@@ -29,6 +31,14 @@ npm start
 ```text
 http://localhost:3000
 ```
+
+5. Open the login page if required:
+
+```text
+http://localhost:3000/login
+```
+
+6. Use the default login in `auth.json` or update it before starting the panel.
 
 ## Next Phases
 

@@ -1,0 +1,4 @@
+node_modules/
+tmp/
+plugins/*.jar
+.DS_Store
