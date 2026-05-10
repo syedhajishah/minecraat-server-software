@@ -9,40 +9,40 @@ import FilesPage from '@/pages/FilesPage';
 import SettingsPage from '@/pages/SettingsPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+    const { isAuthenticated } = useAuthStore();
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
 function App() {
-  const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated } = useAuthStore();
 
-  if (!isAuthenticated && window.location.pathname !== '/login') {
-    return <LoginPage />;
-  }
+    if (!isAuthenticated && window.location.pathname !== '/login') {
+        return <LoginPage />;
+    }
 
-  return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/*"
-          element={
-            <PrivateRoute>
-              <DashboardLayout>
-                <Routes>
-                  <Route path="/" element={<DashboardPage />} />
-                  <Route path="/servers" element={<ServersPage />} />
-                  <Route path="/servers/:id" element={<ServerDetailPage />} />
-                  <Route path="/files" element={<FilesPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                </Routes>
-              </DashboardLayout>
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </Router>
-  );
+    return (
+        <Router>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                    path="/*"
+                    element={
+                        <PrivateRoute>
+                            <DashboardLayout>
+                                <Routes>
+                                    <Route path="/" element={<DashboardPage />} />
+                                    <Route path="/servers" element={<ServersPage />} />
+                                    <Route path="/servers/:id" element={<ServerDetailPage />} />
+                                    <Route path="/files" element={<FilesPage />} />
+                                    <Route path="/settings" element={<SettingsPage />} />
+                                </Routes>
+                            </DashboardLayout>
+                        </PrivateRoute>
+                    }
+                />
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;
